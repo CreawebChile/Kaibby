@@ -1365,3 +1365,84 @@ nav {
 }
 
 /* ...existing code... */
+
+/* Estilos para la página de medicamentos */
+.medications-grid {
+    display: grid;
+    gap: 2rem;
+    padding: 2rem 0;
+}
+
+.medication-category {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+}
+
+.medication-category h2 {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: var(--primary-color);
+    margin-bottom: 1.5rem;
+}
+
+.medication-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.medication-card {
+    background: var(--background-color);
+    border-radius: 8px;
+    padding: 1.5rem;
+    transition: transform 0.3s ease;
+}
+
+.medication-card:hover {
+    transform: translateY(-5px);
+}
+
+.medication-card h3 {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+.med-description {
+    color: var(--text-color);
+    margin-bottom: 1rem;
+}
+
+.med-price {
+    font-weight: bold;
+    color: var(--secondary-color);
+    margin-bottom: 1rem;
+}
+
+.med-details {
+    background: white;
+    border-radius: 6px;
+    padding: 1rem;
+}
+
+.med-details p {
+    margin: 0.5rem 0;
+}
+
+@media (max-width: 768px) {
+    .medication-category {
+        padding: 1rem;
+    }
+
+    .medication-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .medication-card {
+        padding: 1rem;
+    }
+}
+
+/* ...existing code... */
