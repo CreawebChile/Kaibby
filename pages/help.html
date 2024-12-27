@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explorador de Razas de Perros - Encuentra tu Raza Ideal | Kaibby</title>
+    <meta name="description" content="Explora todas las razas de perros: características, temperamento, tamaño y necesidades específicas. Encuentra la raza perfecta para ti.">
+    <meta name="keywords" content="razas de perros, razas caninas, tipos de perros, características perros, temperamento perros">
+    <meta name="author" content="Kaibby">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.kaibby.com/pages/help.html">
+    <meta property="og:title" content="Explorador de Razas de Perros | Kaibby">
+    <meta property="og:description" content="Descubre todas las razas de perros y sus características. Encuentra la raza perfecta para tu estilo de vida.">
+    <meta property="og:image" content="../images/breeds-share.jpg">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Explorador de Razas de Perros | Kaibby">
+    <meta name="twitter:description" content="Descubre todas las razas de perros y sus características. Encuentra la raza perfecta para tu estilo de vida.">
+    <meta name="twitter:image" content="../images/breeds-share.jpg">
+    
+    <link rel="icon" type="image/png" sizes="32x32" href="../favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../favicon/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../favicon/apple-touch-icon.png">
+    <link rel="manifest" href="../favicon/site.webmanifest">
+    <link rel="mask-icon" href="../favicon/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="theme-color" content="#ffffff">
+    <!-- Eliminar o comentar la meta tag que previene la traducción -->
+    <!-- <meta name="google" content="notranslate"> -->
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <nav>
+        <div class="logo">
+            <img src="../images/Kaibby.webp" alt="Kaibby Logo" class="logo-img">
+            <span class="logo-text">Kaibby</span>
+        </div>
+        <ul class="nav-links">
+            <li><a href="../index.html">Inicio</a></li>
+            <li><a href="training.html">Entrenamiento</a></li>
+            <li><a href="behavior.html">Comportamiento</a></li>
+            <li><a href="food.html">Guía de Alimentación Canina</a></li>
+            <li><a href="../calculadora/edad.html">Calculadora de Edad Canina</a></li>
+            <li><a href="help.html">Razas de perros</a></li>
+        </ul>
+        </ul>
+        <div class="hamburger">
+            <div class="line"></div>
+            <div class="line"></div>
+            <div class="line"></div>
+        </div>
+    </nav>
+
+    <div class="hero-faq">
+        <h1>Dog Breeds Explorer</h1>
+        <div class="search-wrapper">
+            <div class="search-container">
+                <input type="text" 
+                       id="breedSearch" 
+                       placeholder="Search by breed or temperament..."
+                       autocomplete="off">
+                <button onclick="searchBreeds()">Search</button>
+            </div>
+            <div id="searchSuggestions" class="search-suggestions"></div>
+        </div>
+    </div>
+
+    <div class="content-sections">
+        <div id="breedResults" class="info-grid">
+            <!-- Los resultados se cargarán aquí -->
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 Kaibby. Todos los derechos reservados.</p>
+    </footer>
+
+    <script src="../js/menu.js"></script>
+    <script>
+        const API_KEY = 'live_oBop6WlmeFFOB40YlxJl6iKwThJYAGwZDuP5cs3EDJpG8tBZhJa9BpRA3xAgg8uU';
+        let allBreeds = [];
+        let selectedBreed = null;
+        
+        // Función simplificada para mostrar sugerencias
+        function showSuggestions(searchTerm) {
+            const suggestionsContainer = document.getElementById('searchSuggestions');
+            if (!searchTerm) {
+                suggestionsContainer.style.display = 'none';
+                return;
+            }
+
+            const filteredBreeds = allBreeds.filter(breed => {
+                const term = searchTerm.toLowerCase();
+                return breed.name.toLowerCase().includes(term) ||
+                       (breed.temperament && breed.temperament.toLowerCase().includes(term)) ||
+                       (breed.breed_group && breed.breed_group.toLowerCase().includes(term));
+            }).slice(0, 5);
+
+            if (filteredBreeds.length > 0) {
+                const html = `
+                    <ul>
+                        ${filteredBreeds.map(breed => `
+                            <li onclick="handleBreedSelection(${breed.id})">
+                                <div class="suggestion-item">
+                                    ${breed.image ? 
+                                        `<img src="${breed.image.url}" alt="${breed.name}" class="suggestion-thumbnail">` :
+                                        '<div class="suggestion-thumbnail-placeholder"><i class="fas fa-paw"></i></div>'
+                                    }
+                                    <div class="suggestion-info">
+                                        <strong>${highlightMatch(breed.name, searchTerm)}</strong>
+                                        <small>
+                                            <i class="fas fa-tag"></i> ${breed.breed_group || 'No group specified'}
+                                            <br>
+                                            <i class="fas fa-heart"></i> ${breed.temperament || 'No temperament specified'}
+                                        </small>
+                                    </div>
+                                </div>
+                            </li>
+                        `).join('')}
+                    </ul>
+                `;
+                suggestionsContainer.innerHTML = html;
+                suggestionsContainer.style.display = 'block';
+            } else {
+                suggestionsContainer.innerHTML = `
+                    <div class="no-suggestions">
+                        <i class="fas fa-search"></i>
+                        <p>No matches found</p>
+                    </div>
+                `;
+                suggestionsContainer.style.display = 'block';
+            }
+        }
+
+        // Función para resaltar el texto coincidente
+        function highlightMatch(text, search) {
+            if (!search) return text;
+            const regex = new RegExp(`(${search})`, 'gi');
+            return text.replace(regex, '<mark>$1</mark>');
+        }
+
+        // Nueva función para manejar la selección de una raza
+        async function handleBreedSelection(breedId) {
+            const breed = allBreeds.find(b => b.id === breedId);
+            if (!breed) return;
+
+            // Actualizar búsqueda y ocultar sugerencias
+            document.getElementById('breedSearch').value = breed.name;
+            document.getElementById('searchSuggestions').style.display = 'none';
+
+            // Mostrar indicador de carga
+            const resultsContainer = document.getElementById('breedResults');
+            resultsContainer.innerHTML = `
+                <div class="loading-indicator">
+                    <i class="fas fa-paw fa-spin"></i>
+                    <p>Cargando información de ${breed.name}...</p>
+                </div>
+            `;
+
+            try {
+                const cardHtml = await handleBreedDetails(breed);
+                resultsContainer.innerHTML = cardHtml;
+                
+                // Esperar a que se renderice el contenido
+                setTimeout(() => {
+                    const targetElement = document.getElementById(`breed-${breed.id}`);
+                    const offset = document.querySelector('nav').offsetHeight + 20;
+                    const elementPosition = targetElement.getBoundingClientRect().top + window.pageYOffset - offset;
+
+                    window.scrollTo({
+                        top: elementPosition,
+                        behavior: 'smooth'
+                    });
+
+                    // Efecto de highlight
+                    targetElement.classList.add('highlight');
+                    setTimeout(() => targetElement.classList.remove('highlight'), 2000);
+                }, 100);
+
+            } catch (error) {
+                resultsContainer.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <p>Ocurrió un error al cargar los detalles.</p>
+                        <button onclick="handleBreedSelection(${breedId})">Intentar de nuevo</button>
+                    </div>
+                `;
+                console.error('Error:', error);
+            }
+        }
+
+        // Función simplificada para mostrar detalles de la raza
+        async function handleBreedDetails(breed) {
+            return `
+                <div class="info-card selected-breed" id="breed-${breed.id}">
+                    ${breed.image ? 
+                        `<div class="breed-image-container">
+                            <img src="${breed.image.url}" alt="${breed.name}" class="breed-image">
+                         </div>` :
+                        '<div class="image-placeholder"><i class="fas fa-paw"></i></div>'
+                    }
+                    <div class="breed-content">
+                        <h3>${breed.name}</h3>
+                        <div class="breed-tags">
+                            <span class="tag"><i class="fas fa-tag"></i> ${breed.breed_group || 'No group specified'}</span>
+                            <span class="tag"><i class="fas fa-ruler"></i> ${breed.height.metric} cm</span>
+                            <span class="tag"><i class="fas fa-weight"></i> ${breed.weight.metric} kg</span>
+                        </div>
+                        <div class="tip-box">
+                            <h4><i class="fas fa-heart"></i> Temperament:</h4>
+                            <p>${breed.temperament || 'Not specified'}</p>
+                        </div>
+                        <div class="recommendation-box">
+                            <h4><i class="fas fa-info-circle"></i> Characteristics:</h4>
+                            <p><strong>Life span:</strong> ${breed.life_span}</p>
+                            <p><strong>Bred for:</strong> ${breed.bred_for || 'Not specified'}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Eventos mejorados
+        document.getElementById('breedSearch').addEventListener('input', debounce((e) => {
+            showSuggestions(e.target.value.trim());
+        }, 300));
+
+        document.getElementById('breedSearch').addEventListener('focus', () => {
+            const searchTerm = document.getElementById('breedSearch').value.trim();
+            if (searchTerm) {
+                showSuggestions(searchTerm);
+            }
+        });
+
+        // Inicialización mejorada
+        async function initializeBreeds() {
+            try {
+                const resultsContainer = document.getElementById('breedResults');
+                resultsContainer.innerHTML = '<div class="loading"><i class="fas fa-paw fa-spin"></i> Loading breeds...</div>';
+
+                const response = await fetch('https://api.thedogapi.com/v1/breeds', {
+                    headers: { 'x-api-key': API_KEY }
+                });
+                allBreeds = await response.json();
+
+                // Ordenar razas alfabéticamente
+                allBreeds.sort((a, b) => a.name.localeCompare(b.name));
+
+                // Mostrar razas iniciales
+                await showBreeds(allBreeds.slice(0, 12), resultsContainer);
+
+                // Agregar botón "Cargar más"
+                if (allBreeds.length > 12) {
+                    const loadMoreBtn = document.createElement('button');
+                    loadMoreBtn.className = 'load-more-btn';
+                    loadMoreBtn.innerHTML = 'Load More <i class="fas fa-chevron-down"></i>';
+                    loadMoreBtn.onclick = loadMoreBreeds;
+                    resultsContainer.appendChild(loadMoreBtn);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                resultsContainer.innerHTML = '<div class="error">Error loading breeds. Please try again.</div>';
+            }
+        }
+
+        // Función para cargar más razas
+        let currentPage = 1;
+        const breedsPerPage = 12;
+
+        function loadMoreBreeds() {
+            currentPage++;
+            const start = (currentPage - 1) * breedsPerPage;
+            const end = start + breedsPerPage;
+            const nextBreeds = allBreeds.slice(start, end);
+            
+            const grid = document.querySelector('.breeds-grid');
+            nextBreeds.forEach(breed => {
+                const breedElement = document.createElement('article');
+                breedElement.className = 'breed-card';
+                breedElement.onclick = () => handleBreedSelection(breed.id);
+                breedElement.innerHTML = `
+                    <div class="breed-image-wrapper">
+                        ${breed.image ? 
+                            `<img src="${breed.image.url}" alt="${breed.name}" loading="lazy">` :
+                            '<div class="placeholder-image"><i class="fas fa-paw"></i></div>'
+                        }
+                    </div>
+                    <div class="breed-info">
+                        <h3>${breed.name}</h3>
+                        <div class="breed-tags">
+                            ${breed.breed_group ? 
+                                `<span class="tag"><i class="fas fa-tag"></i> ${breed.breed_group}</span>` : 
+                                ''
+                            }
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(breedElement);
+            });
+
+            // Ocultar botón si no hay más razas
+            if (end >= allBreeds.length) {
+                document.querySelector('.load-more-btn').style.display = 'none';
+            }
+        }
+
+        // Función mejorada para mostrar razas iniciales y búsqueda
+        async function showBreeds(breeds, container) {
+            const gridHTML = `
+                <div class="breeds-grid">
+                    ${breeds.map(breed => `
+                        <article class="breed-card" onclick="handleBreedSelection(${breed.id})">
+                            <div class="breed-image-wrapper">
+                                ${breed.image ? 
+                                    `<img src="${breed.image.url}" alt="${breed.name}" loading="lazy">` :
+                                    '<div class="placeholder-image"><i class="fas fa-paw"></i></div>'
+                                }
+                            </div>
+                            <div class="breed-info">
+                                <h3>${breed.name}</h3>
+                                <div class="breed-tags">
+                                    ${breed.breed_group ? 
+                                        `<span class="tag"><i class="fas fa-tag"></i> ${breed.breed_group}</span>` : 
+                                        ''
+                                    }
+                                </div>
+                            </div>
+                        </article>
+                    `).join('')}
+                </div>
+            `;
+            
+            container.innerHTML = gridHTML;
+        }
+
+        async function searchBreeds() {
+            const searchTerm = document.getElementById('breedSearch').value.trim();
+            const resultsContainer = document.getElementById('breedResults');
+            resultsContainer.innerHTML = '<p>Buscando razas...</p>';
+
+            try {
+                const response = await fetch('https://api.thedogapi.com/v1/breeds', {
+                    headers: {
+                        'x-api-key': API_KEY
+                    }
+                });
+                const breeds = await response.json();
+                
+                const filteredBreeds = breeds.filter(breed => 
+                    breed.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    (breed.temperament && breed.temperament.toLowerCase().includes(searchTerm.toLowerCase()))
+                );
+
+                if (filteredBreeds.length === 0) {
+                    resultsContainer.innerHTML = '<p>No se encontraron razas que coincidan con tu búsqueda.</p>';
+                    return;
+                }
+
+                let html = '';
+                for (const breed of filteredBreeds) {
+                    html += `
+                        <div class="info-card">
+                            ${breed.image ? 
+                                `<img src="${breed.image.url}" alt="${breed.name}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px;">` :
+                                '<div style="width: 100%; height: 200px; background-color: #f0f0f0; border-radius: 8px; display: flex; align-items: center; justify-content: center;">Imagen no disponible</div>'
+                            }
+                            <h3>${breed.name}</h3>
+                            <p><strong>Temperamento:</strong> ${breed.temperament || 'No especificado'}</p>
+                            <p><strong>Grupo:</strong> ${breed.breed_group || 'No especificado'}</p>
+                            <div class="tip-box">
+                                <h4>Propósito de la Raza:</h4>
+                                <p>${breed.bred_for || 'No especificado'}</p>
+                            </div>
+                            <div class="recommendation-box">
+                                <h4>Características Físicas:</h4>
+                                <p><strong>Esperanza de vida:</strong> ${breed.life_span}</p>
+                                <p><strong>Altura adulto:</strong> ${breed.height.metric} cm</p>
+                                <p><strong>Peso adulto:</strong> ${breed.weight.metric} kg</p>
+                            </div>
+                        </div>
+                    `;
+                }
+                resultsContainer.innerHTML = html;
+            } catch (error) {
+                resultsContainer.innerHTML = '<p>Ocurrió un error al buscar las razas. Por favor, intenta de nuevo.</p>';
+                console.error('Error:', error);
+            }
+        }
+
+        // Cargar razas al iniciar la página
+        window.addEventListener('load', () => {
+            document.getElementById('breedSearch').value = '';
+            searchBreeds();
+        });
+
+        // Buscar al presionar Enter
+        document.getElementById('breedSearch').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchBreeds();
+            }
+        });
+
+        // Función debounce para mejorar el rendimiento
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+    </script>
+
+    <style>
+        .highlight {
+            animation: highlight 2s ease-out;
+        }
+
+        @keyframes highlight {
+            0% { background-color: var(--accent-color); }
+            100% { background-color: white; }
+        }
+
+        .loading-indicator {
+            text-align: center;
+            padding: 2rem;
+            color: var(--primary-color);
+        }
+
+        .breed-image-container {
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+        }
+
+        .breed-image {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .breed-image:hover {
+            transform: scale(1.05);
+        }
+
+        mark {
+            background-color: var(--accent-color);
+            padding: 0 2px;
+            border-radius: 2px;
+        }
+
+        /* Estilos adicionales para la animación */
+        .selected-breed {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .highlight {
+            animation: highlightCard 2s ease-out;
+        }
+
+        @keyframes highlightCard {
+            0% { background-color: var(--accent-color); }
+            100% { background-color: white; }
+        }
+
+        .loading-indicator {
+            text-align: center;
+            padding: 2rem;
+            color: var(--primary-color);
+            font-size: 1.2rem;
+        }
+
+        .loading-indicator i {
+            margin-right: 0.5rem;
+        }
+
+        .fa-spin {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Asegurarnos de que estos estilos estén presentes */
+        .selected-breed {
+            opacity: 0;
+            animation: fadeInBreed 0.5s ease-out forwards;
+        }
+
+        @keyframes fadeInBreed {
+            from { 
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .highlight {
+            animation: highlightBreed 2s ease-out;
+        }
+
+        @keyframes highlightBreed {
+            0% { background-color: var(--accent-color); }
+            100% { background-color: white; }
+        }
+
+        /* Estilos adicionales */
+        .breed-tags {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin: 1rem 0;
+        }
+
+        .tag {
+            background: var(--background-color);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tag i {
+            color: var(--primary-color);
+        }
+
+        .error-message {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-color);
+        }
+
+        .error-message i {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .error-message button {
+            margin-top: 1rem;
+            padding: 0.5rem 1rem;
+            border: none;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        .breeds-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 2rem;
+            padding: 2rem;
+        }
+
+        .breed-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+
+        .breed-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+
+        .breed-image-wrapper {
+            position: relative;
+            padding-top: 75%; /* 4:3 Aspect Ratio */
+            overflow: hidden;
+        }
+
+        .breed-image-wrapper img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .breed-card:hover .breed-image-wrapper img {
+            transform: scale(1.05);
+        }
+
+        .breed-info {
+            padding: 1.5rem;
+        }
+
+        .breed-info h3 {
+            margin: 0 0 1rem;
+            font-size: 1.2rem;
+            color: var(--primary-color);
+        }
+
+        .breed-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: var(--primary-color);
+            font-size: 1.2rem;
+        }
+
+        .load-more-btn {
+            display: block;
+            margin: 2rem auto;
+            padding: 1rem 2rem;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .load-more-btn:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .error {
+            text-align: center;
+            padding: 2rem;
+            color: #ff4444;
+        }
+
+        @media (max-width: 768px) {
+            .breeds-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                padding: 1rem;
+                gap: 1rem;
+            }
+
+            .breed-info {
+                padding: 1rem;
+            }
+
+            .breed-info h3 {
+                font-size: 1.1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .breeds-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</body>
+</html>
